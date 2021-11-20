@@ -47,22 +47,55 @@ export default class AssetStore {
 	}
 }
 
-export class ImageAsset {
+class BaseAsset {
 	constructor(path, meta) {
-		const image = new Image();
-		this.data = image;
-		this.meta = meta;
+		this.path = path;
+		this.meta = this.parseMeta(meta);
 		this.state = 'loading';
-		this.request = new Promise((resolve, reject) => {
-			image.onload = () => {
-				this.state = 'loaded';
-				resolve(image);
-			};
-			image.onerror = err => {
-				this.state = 'error';
-				reject(err);
-			}
+		this.data = null;
+		this.request = this.loadData(path);
+		this.request.then(data => {
+			this.state = 'loaded';
+			this.data = data;
+		}, err => {
+			this.state = 'error';
+			this.data = err;
 		});
-		image.src = path;
+	}
+	
+	parseMeta(meta) {
+		return meta;
+	}
+	
+	loadData(path) {
+		throw new Error('Called abstract method');
+		return new Promise();
+	}
+	
+	cancelLoad() { }
+	
+	reloadData() {
+		this.cancelLoad();
+		this.state = 'loading';
+		this.request = this.loadData(`${this.path}#${Date.now()}`);
+		this.request.then(data => {
+			this.state = 'loaded';
+			this.data = data;
+		}, err => {
+			this.state = 'error';
+			this.data = err;
+		});
+	}
+}
+
+export class ImageAsset extends BaseAsset {
+	loadData(path) {
+		return new Promise((resolve, reject) => {
+			const image = new Image();
+			this.data = image;
+			image.onload = () => resolve(image);
+			image.onerror = () => reject(image);
+			image.src = path;
+		});
 	}
 }
