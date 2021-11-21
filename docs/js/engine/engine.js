@@ -1,6 +1,12 @@
 import AssetStore, { ImageAsset } from "./assetstore.js";
 
 export default class ScribbleEngine {
+	
+	#drawLoopId;
+	#lastDrawTime;
+	
+	#onDrawBound;
+	
 	constructor({
 		canvas,
 	}) {
@@ -12,10 +18,10 @@ export default class ScribbleEngine {
 		this.scenes = Object.create(null);
 		this.currScenes = [];
 		
-		this.drawLoopId = null;
-		this.lastDrawTime = -1;
+		this.#drawLoopId = null;
+		this.#lastDrawTime = -1;
 		
-		this.onDraw = this.onDraw.bind(this);
+		this.#onDrawBound = this.#onDraw.bind(this);
 	}
 	
 	async start(setup) {
@@ -25,9 +31,9 @@ export default class ScribbleEngine {
 	}
 	
 	#enableDraw() {
-		if (this.drawLoopId === null) {
-			this.lastDrawTime = -1;
-			this.drawLoopId = requestAnimationFrame(this.onDraw);
+		if (this.#drawLoopId === null) {
+			this.#lastDrawTime = -1;
+			this.#drawLoopId = requestAnimationFrame(this.#onDrawBound);
 			return true;
 		} else {
 			return false;
@@ -35,21 +41,21 @@ export default class ScribbleEngine {
 	}
 	
 	#disableDraw() {
-		if (this.drawLoopId !== null) {
-			cancelAnimationFrame(this.drawLoopId);
-			this.drawLoopId = null;
+		if (this.#drawLoopId !== null) {
+			cancelAnimationFrame(this.#drawLoopId);
+			this.#drawLoopId = null;
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	onDraw(now) {
-		const delta = (this.lastDrawTime < 0)
+	#onDraw(now) {
+		const delta = (this.#lastDrawTime < 0)
 			? 0
-			: (now - this.lastDrawTime) / 1000;
-		this.lastDrawTime = now;
-		this.drawLoopId = requestAnimationFrame(this.onDraw);
+			: (now - this.#lastDrawTime) / 1000;
+		this.#lastDrawTime = now;
+		this.#drawLoopId = requestAnimationFrame(this.#onDrawBound);
 		
 		this.g.fillRect(0, 0, this.canvas.width, this.canvas.height);
 		
